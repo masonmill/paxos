@@ -2,7 +2,9 @@
 #define PAXOS_INCLUDE_RPC_TRANSPORT_H_
 
 #include <cstdint>
+#include <cstring>
 #include <string>
+#include <type_traits>
 #include <vector>
 
 #include "rpc_param.h"
@@ -58,6 +60,41 @@ bool SendReply(int fd, const RpcReply& reply);
 // Returns: true on success, false if the peer closed the connection or
 //   sent a bad message.
 bool ReceiveReply(int fd, RpcReply* reply);
+
+// Copies `value`'s bytes into a payload. `T` must have a fixed size and
+// no pointers, so a byte copy carries its full value.
+//
+// Params:
+//   value: the struct to encode.
+//
+// Returns: the payload bytes.
+template <typename T>
+std::vector<std::uint8_t> SerializePayload(const T& value) {
+  static_assert(std::is_trivially_copyable_v<T>,
+                "T must have a fixed size and no pointers.");
+  const auto* bytes = reinterpret_cast<const std::uint8_t*>(&value);
+  return std::vector<std::uint8_t>(bytes, bytes + sizeof(T));
+}
+
+// Copies a payload's bytes into a struct. `T` must have a fixed size and
+// no pointers, so a byte copy carries its full value.
+//
+// Params:
+//   payload: bytes produced by `SerializePayload`.
+//   value: set to the decoded struct.
+//
+// Returns: true on success, false if `payload`'s size does not match
+//   `sizeof(T)`.
+template <typename T>
+bool DeserializePayload(const std::vector<std::uint8_t>& payload, T* value) {
+  static_assert(std::is_trivially_copyable_v<T>,
+                "T must have a fixed size and no pointers.");
+  if (payload.size() != sizeof(T)) {
+    return false;
+  }
+  std::memcpy(value, payload.data(), sizeof(T));
+  return true;
+}
 
 }  // namespace paxos
 

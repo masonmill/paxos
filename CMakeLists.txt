@@ -11,6 +11,17 @@ add_library(rpc
 )
 target_include_directories(rpc PUBLIC include)
 
+add_library(paxos_node_lib
+  src/peer_config.cpp
+  src/paxos_node.cpp
+)
+target_link_libraries(paxos_node_lib PUBLIC rpc)
+
+add_executable(paxos_node
+  src/paxos_node_main.cpp
+)
+target_link_libraries(paxos_node PRIVATE paxos_node_lib)
+
 include(FetchContent)
 FetchContent_Declare(
   googletest
@@ -27,5 +38,11 @@ add_executable(test_rpc
 )
 target_link_libraries(test_rpc PRIVATE rpc gtest_main)
 
+add_executable(test_paxos_node
+  tests/test_paxos_node.cpp
+)
+target_link_libraries(test_paxos_node PRIVATE paxos_node_lib gtest_main)
+
 include(GoogleTest)
 gtest_discover_tests(test_rpc)
+gtest_discover_tests(test_paxos_node)
