@@ -22,6 +22,11 @@ add_executable(paxos_node
 )
 target_link_libraries(paxos_node PRIVATE paxos_node_lib)
 
+add_library(paxos_rsm_lib
+  src/paxos_rsm.cpp
+)
+target_link_libraries(paxos_rsm_lib PUBLIC rpc)
+
 include(FetchContent)
 FetchContent_Declare(
   googletest
@@ -43,6 +48,12 @@ add_executable(test_paxos_node
 )
 target_link_libraries(test_paxos_node PRIVATE paxos_node_lib gtest_main)
 
+add_executable(test_paxos_rsm
+  tests/test_paxos_rsm.cpp
+)
+target_link_libraries(test_paxos_rsm PRIVATE paxos_rsm_lib gtest_main)
+
 include(GoogleTest)
 gtest_discover_tests(test_rpc)
 gtest_discover_tests(test_paxos_node)
+gtest_discover_tests(test_paxos_rsm)
