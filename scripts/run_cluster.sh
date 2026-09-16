@@ -10,9 +10,10 @@
 #   1. Build the project: cmake --build build
 #   2. Start a cluster:   scripts/run_cluster.sh start --nodes 3
 #      Each node prints its startup line (id and socket path) to stderr.
-#   3. Smoke-test it: write a short program (or reuse tests/test_kv_client.cpp's
-#      pattern) that builds a paxos::KvClient from the printed socket paths
-#      and calls Get/PutAppend; it should get back a placeholder reply.
+#   3. Smoke-test it: write a short program (or reuse tests/test_rpc.cpp's
+#      pattern) that calls Paxos.Prepare/Accept/Decide or KV.Get/PutAppend
+#      against a printed socket path; the node aborts, since those handlers
+#      are TODOs until their real logic is implemented.
 #   4. Tear it down:      scripts/run_cluster.sh stop
 #      No paxos_node processes should remain (check with `pgrep paxos_node`).
 #   5. Start again immediately; it should succeed even though the previous

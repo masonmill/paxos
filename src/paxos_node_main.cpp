@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+#include "kv_server.h"
+#include "paxos_impl.h"
 #include "paxos_node.h"
 #include "peer_config.h"
 #include "rpc_dispatch.h"
@@ -64,8 +66,8 @@ int main(int argc, char** argv) {
                socket_path.c_str());
 
   paxos::RpcDispatchRegistry registry;
-  paxos::RegisterPaxosStubHandlers(&registry);
-  paxos::RegisterKvStubHandlers(&registry);
+  paxos::RegisterPaxosHandlers(&registry);
+  paxos::RegisterKvHandlers(&registry);
   registry.RunAcceptLoop(listen_fd);
 
   return 0;

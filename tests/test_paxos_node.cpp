@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "gtest/gtest.h"
+#include "paxos_impl.h"
 #include "paxos_node.h"
 #include "paxos_rpcs.h"
 #include "peer_config.h"
@@ -53,34 +54,21 @@ TEST(PaxosNodeTest, ValidatesPeerIdRange) {
   EXPECT_FALSE(paxos::ValidatePeerId(/*peer_count=*/3, /*id=*/-1));
 }
 
-TEST(PaxosNodeTest, StubHandlersReplyWithPlaceholderPayload) {
+TEST(PaxosImplTest, HandlersAbortWhenInvoked) {
   paxos::RpcDispatchRegistry registry;
-  paxos::RegisterPaxosStubHandlers(&registry);
+  paxos::RegisterPaxosHandlers(&registry);
 
   paxos::RpcRequest prepare_request;
   prepare_request.method_name = paxos::kPaxosPrepareMethod;
-  paxos::RpcReply prepare_reply = registry.Dispatch(prepare_request);
-  EXPECT_EQ(prepare_reply.status, paxos::RpcStatus::kOk);
-  paxos::PrepareReply prepare_result;
-  ASSERT_TRUE(
-      paxos::DeserializePayload(prepare_reply.payload, &prepare_result));
-  EXPECT_FALSE(prepare_result.ok);
+  EXPECT_DEATH(registry.Dispatch(prepare_request), "");
 
   paxos::RpcRequest accept_request;
   accept_request.method_name = paxos::kPaxosAcceptMethod;
-  paxos::RpcReply accept_reply = registry.Dispatch(accept_request);
-  EXPECT_EQ(accept_reply.status, paxos::RpcStatus::kOk);
-  paxos::AcceptReply accept_result;
-  ASSERT_TRUE(paxos::DeserializePayload(accept_reply.payload, &accept_result));
-  EXPECT_FALSE(accept_result.ok);
+  EXPECT_DEATH(registry.Dispatch(accept_request), "");
 
   paxos::RpcRequest decide_request;
   decide_request.method_name = paxos::kPaxosDecideMethod;
-  paxos::RpcReply decide_reply = registry.Dispatch(decide_request);
-  EXPECT_EQ(decide_reply.status, paxos::RpcStatus::kOk);
-  paxos::DecideReply decide_result;
-  ASSERT_TRUE(paxos::DeserializePayload(decide_reply.payload, &decide_result));
-  EXPECT_FALSE(decide_result.ok);
+  EXPECT_DEATH(registry.Dispatch(decide_request), "");
 }
 
 }  // namespace

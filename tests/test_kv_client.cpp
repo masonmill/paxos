@@ -1,9 +1,7 @@
-#include <thread>
-
 #include "gtest/gtest.h"
-#include "kv_client.h"
 #include "kv_rpcs.h"
-#include "paxos_node.h"
+#include "kv_server.h"
+#include "paxos_impl.h"
 #include "paxos_rpcs.h"
 #include "rpc_dispatch.h"
 #include "rpc_transport.h"
@@ -34,59 +32,31 @@ TEST(KvRpcsTest, SerializesAndDeserializesRoundTrip) {
   EXPECT_EQ(received_put_append.is_append, sent_put_append.is_append);
 }
 
-TEST(KvServerTest, StubHandlersReturnOkStatus) {
+TEST(KvServerTest, HandlersAbortWhenInvoked) {
   paxos::RpcDispatchRegistry registry;
-  paxos::RegisterKvStubHandlers(&registry);
+  paxos::RegisterKvHandlers(&registry);
 
   paxos::RpcRequest get_request;
   get_request.method_name = paxos::kKvGetMethod;
-  paxos::RpcReply get_reply = registry.Dispatch(get_request);
-  EXPECT_EQ(get_reply.status, paxos::RpcStatus::kOk);
-  paxos::GetReply get_result;
-  EXPECT_TRUE(paxos::DeserializePayload(get_reply.payload, &get_result));
+  EXPECT_DEATH(registry.Dispatch(get_request), "");
 
   paxos::RpcRequest put_append_request;
   put_append_request.method_name = paxos::kKvPutAppendMethod;
-  paxos::RpcReply put_append_reply = registry.Dispatch(put_append_request);
-  EXPECT_EQ(put_append_reply.status, paxos::RpcStatus::kOk);
-  paxos::PutAppendReply put_append_result;
-  EXPECT_TRUE(
-      paxos::DeserializePayload(put_append_reply.payload, &put_append_result));
+  EXPECT_DEATH(registry.Dispatch(put_append_request), "");
 }
 
 TEST(KvServerTest, CoexistsWithPaxosHandlersOnOneRegistry) {
   paxos::RpcDispatchRegistry registry;
-  paxos::RegisterPaxosStubHandlers(&registry);
-  paxos::RegisterKvStubHandlers(&registry);
+  paxos::RegisterPaxosHandlers(&registry);
+  paxos::RegisterKvHandlers(&registry);
 
   paxos::RpcRequest prepare_request;
   prepare_request.method_name = paxos::kPaxosPrepareMethod;
-  EXPECT_EQ(registry.Dispatch(prepare_request).status, paxos::RpcStatus::kOk);
+  EXPECT_DEATH(registry.Dispatch(prepare_request), "");
 
   paxos::RpcRequest get_request;
   get_request.method_name = paxos::kKvGetMethod;
-  EXPECT_EQ(registry.Dispatch(get_request).status, paxos::RpcStatus::kOk);
-}
-
-TEST(KvClientTest, RetriesUntilASuccessfulServer) {
-  paxos::RpcDispatchRegistry registry;
-  paxos::RegisterKvStubHandlers(&registry);
-
-  const std::string live_socket_path = "/tmp/paxos_test_kv_client_live.sock";
-  int listen_fd = paxos::BindAndListenUnixSocket(live_socket_path);
-  ASSERT_GE(listen_fd, 0);
-
-  std::thread accept_thread(
-      [&registry, listen_fd] { registry.RunAcceptLoop(listen_fd); });
-  accept_thread.detach();
-
-  paxos::KvClient client(
-      {"/tmp/paxos_test_kv_client_unreachable.sock", live_socket_path});
-
-  // `Get` retries forever on failure, so reaching this line at all proves
-  // it got past the unreachable server and reached the live one.
-  client.Get(paxos::GetArgs());
-  SUCCEED();
+  EXPECT_DEATH(registry.Dispatch(get_request), "");
 }
 
 }  // namespace

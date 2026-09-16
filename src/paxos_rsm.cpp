@@ -11,14 +11,4 @@ void PaxosRSM::RegisterApplyOpCallback(ApplyOpCallback callback) {
   apply_op_callback_ = std::move(callback);
 }
 
-void PaxosRSM::Start(int, std::uint64_t) {}
-
-PaxosInstanceState PaxosRSM::Status(int, std::uint64_t*) {
-  return PaxosInstanceState::kPending;
-}
-
-void PaxosRSM::Done(int) {}
-
-int PaxosRSM::Max() { return -1; }
-
 }  // namespace paxos

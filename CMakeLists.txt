@@ -14,6 +14,8 @@ target_include_directories(rpc PUBLIC include)
 add_library(paxos_node_lib
   src/peer_config.cpp
   src/paxos_node.cpp
+  src/paxos_impl.cpp
+  src/kv_server_impl.cpp
 )
 target_link_libraries(paxos_node_lib PUBLIC rpc)
 
@@ -24,6 +26,7 @@ target_link_libraries(paxos_node PRIVATE paxos_node_lib)
 
 add_library(paxos_rsm_lib
   src/paxos_rsm.cpp
+  src/paxos_rsm_impl.cpp
 )
 target_link_libraries(paxos_rsm_lib PUBLIC rpc)
 

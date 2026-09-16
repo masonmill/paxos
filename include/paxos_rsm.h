@@ -16,12 +16,12 @@ enum class PaxosInstanceState {
 };
 
 // Called once an instance's value is decided, so the application can
-// apply it. `PaxosRSM` invokes this; this stub type never calls it.
+// apply it. `PaxosRSM` invokes this once its logic is implemented.
 using ApplyOpCallback = std::function<void(int instance_number,
                                            std::uint64_t value)>;
 
 // The direct-call boundary between an RSM layer and the same-process Paxos
-// layer. All methods are stubs with no real Paxos logic.
+// layer. Every method below is a TODO for the real Paxos logic.
 class PaxosRSM {
  public:
   // Wraps the same-process Paxos handle `dispatch_registry` exposes.
@@ -30,21 +30,22 @@ class PaxosRSM {
   //   dispatch_registry: the node's dispatch registry. Not owned.
   explicit PaxosRSM(RpcDispatchRegistry* dispatch_registry);
 
-  // Stores `callback`, to run once a value is decided. `PaxosRSM` invokes
-  // it; this stub type never does.
+  // Stores `callback`, to run once a value is decided.
   //
   // Params:
   //   callback: the function to call on decision.
   void RegisterApplyOpCallback(ApplyOpCallback callback);
 
-  // Starts agreement on `value` for `instance_number`.
+  // Starts agreement on `value` for `instance_number`. TODO: not yet
+  // implemented; aborts the process if called.
   //
   // Params:
   //   instance_number: the Paxos instance to agree on.
   //   value: the value this node proposes.
   void Start(int instance_number, std::uint64_t value);
 
-  // Reports whether `instance_number` is decided.
+  // Reports whether `instance_number` is decided. TODO: not yet
+  // implemented; aborts the process if called.
   //
   // Params:
   //   instance_number: the Paxos instance to check.
@@ -54,12 +55,16 @@ class PaxosRSM {
   PaxosInstanceState Status(int instance_number, std::uint64_t* value);
 
   // Tells Paxos that `instance_number` and all earlier instances are no
-  // longer needed by this node.
+  // longer needed by this node. TODO: not yet implemented; aborts the
+  // process if called.
   //
   // Params:
   //   instance_number: the highest instance number this node is done with.
   void Done(int instance_number);
 
+  // Reports the highest instance number this node has started. TODO: not
+  // yet implemented; aborts the process if called.
+  //
   // Returns: the highest instance number this node has started, or -1 if
   //   none.
   int Max();

@@ -3,8 +3,6 @@
 
 #include <cstddef>
 
-#include "rpc_dispatch.h"
-
 namespace paxos {
 
 // Checks whether `id` is a valid peer index for a config with
@@ -16,20 +14,6 @@ namespace paxos {
 //
 // Returns: true if `id` is in range.
 bool ValidatePeerId(std::size_t peer_count, int id);
-
-// Registers empty stub handlers for `Paxos.Prepare`, `Paxos.Accept`, and
-// `Paxos.Decide` on `registry`. Each handler logs and returns a placeholder.
-//
-// Params:
-//   registry: the dispatch registry to register handlers on.
-void RegisterPaxosStubHandlers(RpcDispatchRegistry* registry);
-
-// Registers empty stub handlers for `KV.Get` and `KV.PutAppend` on
-// `registry`. Each handler logs and returns a placeholder.
-//
-// Params:
-//   registry: the dispatch registry to register handlers on.
-void RegisterKvStubHandlers(RpcDispatchRegistry* registry);
 
 }  // namespace paxos
 
