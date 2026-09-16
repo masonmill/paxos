@@ -48,6 +48,7 @@ add_library(test_support
   tests/support/cluster.cpp
 )
 target_include_directories(test_support PUBLIC tests/support)
+target_link_libraries(test_support PUBLIC rpc)
 target_compile_definitions(test_support PRIVATE
   PAXOS_NODE_PATH="$<TARGET_FILE:paxos_node>"
 )
