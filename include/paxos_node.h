@@ -13,7 +13,9 @@ namespace paxos {
 //   id: the `--id` value to check.
 //
 // Returns: true if `id` is in range.
-bool ValidatePeerId(std::size_t peer_count, int id);
+inline bool ValidatePeerId(std::size_t peer_count, int id) {
+  return id >= 0 && static_cast<std::size_t>(id) < peer_count;
+}
 
 }  // namespace paxos
 

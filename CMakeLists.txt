@@ -12,8 +12,6 @@ add_library(rpc
 target_include_directories(rpc PUBLIC include)
 
 add_library(paxos_node_lib
-  src/peer_config.cpp
-  src/paxos_node.cpp
   src/paxos_impl.cpp
   src/kv_server_impl.cpp
 )
@@ -46,11 +44,6 @@ FetchContent_MakeAvailable(googletest)
 
 enable_testing()
 
-add_executable(test_rpc
-  tests/test_rpc.cpp
-)
-target_link_libraries(test_rpc PRIVATE rpc gtest_main)
-
 add_executable(test_paxos_node
   tests/test_paxos_node.cpp
 )
@@ -67,7 +60,6 @@ add_executable(test_kv_client
 target_link_libraries(test_kv_client PRIVATE paxos_node_lib kv_client_lib gtest_main)
 
 include(GoogleTest)
-gtest_discover_tests(test_rpc)
 gtest_discover_tests(test_paxos_node)
 gtest_discover_tests(test_paxos_rsm)
 gtest_discover_tests(test_kv_client)

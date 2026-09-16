@@ -1,15 +1,26 @@
 #ifndef PAXOS_INCLUDE_RPC_TRANSPORT_H_
 #define PAXOS_INCLUDE_RPC_TRANSPORT_H_
 
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <string>
 #include <type_traits>
 #include <vector>
 
-#include "rpc_param.h"
-
 namespace paxos {
+
+// Maximum length, in bytes, of a method name in a request.
+inline constexpr std::size_t kMaxMethodNameLength = 64;
+
+// Maximum length, in bytes, of a payload in a request or reply.
+inline constexpr std::size_t kMaxPayloadSize = 4096;
+
+// Status codes carried in a reply.
+enum class RpcStatus : std::uint32_t {
+  kOk = 0,
+  kUnknownMethod = 1,
+};
 
 // A request read from or written to a message stream.
 struct RpcRequest {
