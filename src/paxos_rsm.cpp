@@ -4,11 +4,7 @@
 
 namespace paxos {
 
-PaxosRSM::PaxosRSM(RpcDispatchRegistry* dispatch_registry)
-    : dispatch_registry_(dispatch_registry) {}
-
-void PaxosRSM::RegisterApplyOpCallback(ApplyOpCallback callback) {
-  apply_op_callback_ = std::move(callback);
-}
+PaxosRSM::PaxosRSM(Paxos* paxos, ApplyOpCallback apply_op)
+    : paxos_(paxos), apply_op_(std::move(apply_op)) {}
 
 }  // namespace paxos

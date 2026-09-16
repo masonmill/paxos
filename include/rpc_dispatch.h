@@ -35,13 +35,6 @@ class RpcDispatchRegistry {
   //   name.
   RpcReply Dispatch(const RpcRequest& request) const;
 
-  // Accepts connections on `listen_fd` until the process stops, and
-  // serves each one on its own thread.
-  //
-  // Params:
-  //   listen_fd: a bound, listening socket.
-  void RunAcceptLoop(int listen_fd) const;
-
  private:
   std::unordered_map<std::string, RpcHandler> handlers_;
 };

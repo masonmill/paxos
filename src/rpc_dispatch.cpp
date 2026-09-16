@@ -6,23 +6,8 @@
 
 #include <cstdio>
 #include <cstring>
-#include <thread>
 
 namespace paxos {
-
-namespace {
-
-void ServeConnection(const RpcDispatchRegistry& registry, int connection_fd) {
-  RpcRequest request;
-  if (ReceiveRequest(connection_fd, &request)) {
-    RpcReply reply = registry.Dispatch(request);
-    SendReply(connection_fd, reply);
-  }
-
-  close(connection_fd);
-}
-
-}  // namespace
 
 int BindAndListenUnixSocket(const std::string& socket_path) {
   sockaddr_un address{};
@@ -73,17 +58,6 @@ RpcReply RpcDispatchRegistry::Dispatch(const RpcRequest& request) const {
 
   std::fprintf(stderr, "dispatch: %s\n", request.method_name.c_str());
   return handler_entry->second(request);
-}
-
-void RpcDispatchRegistry::RunAcceptLoop(int listen_fd) const {
-  while (true) {
-    int connection_fd = accept(listen_fd, nullptr, nullptr);
-    if (connection_fd < 0) {
-      continue;
-    }
-
-    std::thread(ServeConnection, std::cref(*this), connection_fd).detach();
-  }
 }
 
 }  // namespace paxos

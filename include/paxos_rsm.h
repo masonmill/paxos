@@ -1,77 +1,36 @@
 #ifndef PAXOS_INCLUDE_PAXOS_RSM_H_
 #define PAXOS_INCLUDE_PAXOS_RSM_H_
 
-#include <cstdint>
 #include <functional>
+#include <string>
 
-#include "rpc_dispatch.h"
+#include "paxos.h"
 
 namespace paxos {
 
-// The state of one Paxos instance, as seen by `PaxosRSM::Status`.
-enum class PaxosInstanceState {
-  kDecided,
-  kPending,
-  kForgotten,
-};
+// Called with each decided op, in log order, so the application can apply
+// it.
+using ApplyOpCallback = std::function<void(const std::string& op)>;
 
-// Called once an instance's value is decided, so the application can
-// apply it. `PaxosRSM` invokes this once its logic is implemented.
-using ApplyOpCallback = std::function<void(int instance_number,
-                                           std::uint64_t value)>;
-
-// The direct-call boundary between an RSM layer and the same-process Paxos
-// layer. Every method below is a TODO for the real Paxos logic.
+// A replicated log of ops agreed on through a Paxos peer. `AddOp` is a TODO
+// that aborts the process.
 class PaxosRSM {
  public:
-  // Wraps the same-process Paxos handle `dispatch_registry` exposes.
+  // Params:
+  //   paxos: this server's Paxos peer. Not owned.
+  //   apply_op: called with each decided op.
+  PaxosRSM(Paxos* paxos, ApplyOpCallback apply_op);
+
+  // Adds `op` to the log, applying every earlier decided op first. Returns
+  // once `op` is decided.
   //
   // Params:
-  //   dispatch_registry: the node's dispatch registry. Not owned.
-  explicit PaxosRSM(RpcDispatchRegistry* dispatch_registry);
-
-  // Stores `callback`, to run once a value is decided.
-  //
-  // Params:
-  //   callback: the function to call on decision.
-  void RegisterApplyOpCallback(ApplyOpCallback callback);
-
-  // Starts agreement on `value` for `instance_number`. TODO: not yet
-  // implemented; aborts the process if called.
-  //
-  // Params:
-  //   instance_number: the Paxos instance to agree on.
-  //   value: the value this node proposes.
-  void Start(int instance_number, std::uint64_t value);
-
-  // Reports whether `instance_number` is decided. TODO: not yet
-  // implemented; aborts the process if called.
-  //
-  // Params:
-  //   instance_number: the Paxos instance to check.
-  //   value: set to the decided value, if decided.
-  //
-  // Returns: the instance's state.
-  PaxosInstanceState Status(int instance_number, std::uint64_t* value);
-
-  // Tells Paxos that `instance_number` and all earlier instances are no
-  // longer needed by this node. TODO: not yet implemented; aborts the
-  // process if called.
-  //
-  // Params:
-  //   instance_number: the highest instance number this node is done with.
-  void Done(int instance_number);
-
-  // Reports the highest instance number this node has started. TODO: not
-  // yet implemented; aborts the process if called.
-  //
-  // Returns: the highest instance number this node has started, or -1 if
-  //   none.
-  int Max();
+  //   op: the encoded op to add.
+  void AddOp(const std::string& op);
 
  private:
-  [[maybe_unused]] RpcDispatchRegistry* dispatch_registry_;
-  ApplyOpCallback apply_op_callback_;
+  [[maybe_unused]] Paxos* paxos_;
+  ApplyOpCallback apply_op_;
 };
 
 }  // namespace paxos

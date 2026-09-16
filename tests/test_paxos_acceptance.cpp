@@ -1,6 +1,3 @@
-#include <stdlib.h>
-#include <unistd.h>
-
 #include <algorithm>
 #include <atomic>
 #include <chrono>
@@ -9,46 +6,20 @@
 #include <memory>
 #include <random>
 #include <string>
-#include <system_error>
 #include <thread>
 #include <vector>
 
 #include "gtest/gtest.h"
 #include "paxos.h"
+#include "socket_directory.h"
 
 namespace {
 
 using paxos::Fate;
 using paxos::Paxos;
+using paxos::testing::Partition;
+using paxos::testing::SocketDirectory;
 using Peers = std::vector<std::unique_ptr<Paxos>>;
-
-// A temp directory for one test's sockets, removed on destruction.
-class SocketDirectory {
- public:
-  SocketDirectory() {
-    // A short root keeps socket paths within `sun_path`.
-    char directory_template[] = "/tmp/paxos-XXXXXX";
-    if (mkdtemp(directory_template) != nullptr) {
-      path_ = directory_template;
-    }
-  }
-
-  SocketDirectory(const SocketDirectory&) = delete;
-  SocketDirectory& operator=(const SocketDirectory&) = delete;
-
-  ~SocketDirectory() { std::filesystem::remove_all(path_); }
-
-  // Returns: the socket path peer `id` listens on.
-  std::string Port(int id) const { return path_ + "/px-" + std::to_string(id); }
-
-  // Returns: the socket path peer `from` uses to reach peer `to`.
-  std::string Link(int from, int to) const {
-    return path_ + "/px-" + std::to_string(from) + "-" + std::to_string(to);
-  }
-
- private:
-  std::string path_;
-};
 
 std::mt19937& Random() {
   static std::mt19937 random{std::random_device{}()};
@@ -72,11 +43,7 @@ void SleepFor(std::chrono::milliseconds duration) {
 
 // Returns: peers sharing `directory`'s ports, with `peer_count` slots.
 Peers MakePeers(const SocketDirectory& directory, int peer_count) {
-  std::vector<std::string> ports;
-  for (int i = 0; i < peer_count; ++i) {
-    ports.push_back(directory.Port(i));
-  }
-
+  std::vector<std::string> ports = directory.Ports(peer_count);
   Peers peers;
   for (int i = 0; i < peer_count; ++i) {
     peers.push_back(std::make_unique<Paxos>(ports, i, nullptr));
@@ -88,11 +55,8 @@ Peers MakePeers(const SocketDirectory& directory, int peer_count) {
 Peers MakePartitionedPeers(const SocketDirectory& directory, int peer_count) {
   Peers peers;
   for (int i = 0; i < peer_count; ++i) {
-    std::vector<std::string> ports;
-    for (int j = 0; j < peer_count; ++j) {
-      ports.push_back(j == i ? directory.Port(i) : directory.Link(i, j));
-    }
-    peers.push_back(std::make_unique<Paxos>(ports, i, nullptr));
+    peers.push_back(std::make_unique<Paxos>(
+        directory.PartitionedPorts(peer_count, i), i, nullptr));
   }
   return peers;
 }
@@ -155,34 +119,6 @@ bool WaitMajority(const Peers& peers, int seq,
 bool CheckMax(const Peers& peers, int seq, int max) {
   SleepFor(std::chrono::seconds(3));
   return NumDecided(peers, seq) <= max;
-}
-
-// Links each group's peers to each other, removing all other links.
-//
-// Returns: false if a link fails.
-bool Partition(const SocketDirectory& directory, int peer_count,
-               const std::vector<std::vector<int>>& groups) {
-  for (int i = 0; i < peer_count; ++i) {
-    for (int j = 0; j < peer_count; ++j) {
-      std::filesystem::remove(directory.Link(i, j));
-    }
-  }
-
-  for (const std::vector<int>& group : groups) {
-    for (int i : group) {
-      for (int j : group) {
-        std::error_code error;
-        std::filesystem::create_hard_link(directory.Port(j),
-                                          directory.Link(i, j), error);
-        if (error) {
-          ADD_FAILURE() << "link " << directory.Link(i, j) << ": "
-                        << error.message();
-          return false;
-        }
-      }
-    }
-  }
-  return true;
 }
 
 std::string Str(int value) { return std::to_string(value); }
@@ -481,10 +417,7 @@ TEST(PaxosAcceptanceTest, Many) {
 TEST(PaxosAcceptanceTest, Old) {
   const int kPeerCount = 5;
   SocketDirectory directory;
-  std::vector<std::string> ports;
-  for (int i = 0; i < kPeerCount; ++i) {
-    ports.push_back(directory.Port(i));
-  }
+  std::vector<std::string> ports = directory.Ports(kPeerCount);
   Peers peers(kPeerCount);
 
   peers[1] = std::make_unique<Paxos>(ports, 1, nullptr);

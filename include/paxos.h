@@ -2,13 +2,12 @@
 #define PAXOS_INCLUDE_PAXOS_H_
 
 #include <atomic>
-#include <condition_variable>
-#include <mutex>
+#include <memory>
 #include <string>
-#include <thread>
 #include <vector>
 
 #include "rpc_dispatch.h"
+#include "rpc_server.h"
 
 namespace paxos {
 
@@ -73,19 +72,18 @@ class Paxos {
   void Kill();
 
   // Sets whether this peer's own socket drops some requests and replies.
-  // For testing.
+  // No-op on a shared registry. For testing.
   //
   // Params:
   //   unreliable: true to start dropping, false to stop.
   void SetUnreliable(bool unreliable);
 
-  // Returns: the number of RPCs served on this peer's own socket. For
-  //   testing.
-  int rpc_count() const { return rpc_count_; }
+  // Returns: the number of RPCs served on this peer's own socket, or 0 on a
+  //   shared registry. For testing.
+  int rpc_count() const { return server_ ? server_->rpc_count() : 0; }
 
  private:
   void RegisterHandlers(RpcDispatchRegistry* registry);
-  void RunAcceptLoop(int listen_fd);
 
   RpcReply HandlePrepare(const RpcRequest& request);
   RpcReply HandleAccept(const RpcRequest& request);
@@ -94,15 +92,9 @@ class Paxos {
   std::vector<std::string> peers_;
   int me_;
 
-  RpcDispatchRegistry own_registry_;
   std::atomic<bool> dead_ = false;
-  std::atomic<bool> unreliable_ = false;
-  std::atomic<int> rpc_count_ = 0;
-  std::thread accept_thread_;
-
-  std::mutex connections_mutex_;
-  std::condition_variable connections_done_;
-  int active_connections_ = 0;
+  RpcDispatchRegistry own_registry_;
+  std::unique_ptr<RpcServer> server_;
 };
 
 }  // namespace paxos

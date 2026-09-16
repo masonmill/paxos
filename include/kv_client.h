@@ -1,16 +1,15 @@
 #ifndef PAXOS_INCLUDE_KV_CLIENT_H_
 #define PAXOS_INCLUDE_KV_CLIENT_H_
 
-#include <cstddef>
+#include <cstdint>
+#include <random>
 #include <string>
 #include <vector>
 
-#include "kv_rpcs.h"
-
 namespace paxos {
 
-// A client for the KV service. Retries the servers round-robin until one
-// replies.
+// A client for the KV service. Retries random servers until one replies.
+// Not thread-safe.
 class KvClient {
  public:
   // Params:
@@ -18,26 +17,23 @@ class KvClient {
   //     be empty.
   explicit KvClient(std::vector<std::string> server_socket_paths);
 
-  // Calls `KV.Get`, retrying the servers round-robin until one replies.
-  //
-  // Params:
-  //   args: the request.
-  //
-  // Returns: the reply from whichever server answered.
-  GetReply Get(const GetArgs& args);
+  // Returns: the current value for `key`, or "" if it does not exist.
+  std::string Get(const std::string& key);
 
-  // Calls `KV.PutAppend`, retrying the servers round-robin until one
-  // replies.
-  //
-  // Params:
-  //   args: the request.
-  //
-  // Returns: the reply from whichever server answered.
-  PutAppendReply PutAppend(const PutAppendArgs& args);
+  // Sets `key` to `value`.
+  void Put(const std::string& key, const std::string& value);
+
+  // Appends `value` to `key`'s current value.
+  void Append(const std::string& key, const std::string& value);
 
  private:
+  void PutAppend(const std::string& key, const std::string& value,
+                 bool is_append);
+
   std::vector<std::string> server_socket_paths_;
-  std::size_t next_server_index_ = 0;
+  std::mt19937_64 random_{std::random_device{}()};
+  std::int64_t client_id_;
+  std::int64_t last_op_id_ = -1;
 };
 
 }  // namespace paxos
