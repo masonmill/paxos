@@ -44,6 +44,15 @@ FetchContent_MakeAvailable(googletest)
 
 enable_testing()
 
+add_library(test_support
+  tests/support/cluster.cpp
+)
+target_include_directories(test_support PUBLIC tests/support)
+target_compile_definitions(test_support PRIVATE
+  PAXOS_NODE_PATH="$<TARGET_FILE:paxos_node>"
+)
+add_dependencies(test_support paxos_node)
+
 add_executable(test_paxos_node
   tests/test_paxos_node.cpp
 )
