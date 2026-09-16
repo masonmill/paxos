@@ -24,6 +24,13 @@ bool ValidatePeerId(std::size_t peer_count, int id);
 //   registry: the dispatch registry to register handlers on.
 void RegisterPaxosStubHandlers(RpcDispatchRegistry* registry);
 
+// Registers empty stub handlers for `KV.Get` and `KV.PutAppend` on
+// `registry`. Each handler logs and returns a placeholder.
+//
+// Params:
+//   registry: the dispatch registry to register handlers on.
+void RegisterKvStubHandlers(RpcDispatchRegistry* registry);
+
 }  // namespace paxos
 
 #endif  // PAXOS_INCLUDE_PAXOS_NODE_H_

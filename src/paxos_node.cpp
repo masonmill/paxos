@@ -2,6 +2,7 @@
 
 #include <cstdio>
 
+#include "kv_rpcs.h"
 #include "paxos_rpcs.h"
 
 namespace paxos {
@@ -29,6 +30,22 @@ void RegisterPaxosStubHandlers(RpcDispatchRegistry* registry) {
     std::fprintf(stderr, "%s: not implemented\n", kPaxosDecideMethod);
     RpcReply reply;
     reply.payload = SerializePayload(DecideReply());
+    return reply;
+  });
+}
+
+void RegisterKvStubHandlers(RpcDispatchRegistry* registry) {
+  registry->RegisterHandler(kKvGetMethod, [](const RpcRequest&) {
+    std::fprintf(stderr, "%s: not implemented\n", kKvGetMethod);
+    RpcReply reply;
+    reply.payload = SerializePayload(GetReply());
+    return reply;
+  });
+
+  registry->RegisterHandler(kKvPutAppendMethod, [](const RpcRequest&) {
+    std::fprintf(stderr, "%s: not implemented\n", kKvPutAppendMethod);
+    RpcReply reply;
+    reply.payload = SerializePayload(PutAppendReply());
     return reply;
   });
 }

@@ -65,6 +65,7 @@ int main(int argc, char** argv) {
 
   paxos::RpcDispatchRegistry registry;
   paxos::RegisterPaxosStubHandlers(&registry);
+  paxos::RegisterKvStubHandlers(&registry);
   registry.RunAcceptLoop(listen_fd);
 
   return 0;

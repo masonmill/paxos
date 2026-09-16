@@ -27,6 +27,11 @@ add_library(paxos_rsm_lib
 )
 target_link_libraries(paxos_rsm_lib PUBLIC rpc)
 
+add_library(kv_client_lib
+  src/kv_client.cpp
+)
+target_link_libraries(kv_client_lib PUBLIC rpc)
+
 include(FetchContent)
 FetchContent_Declare(
   googletest
@@ -53,7 +58,13 @@ add_executable(test_paxos_rsm
 )
 target_link_libraries(test_paxos_rsm PRIVATE paxos_rsm_lib gtest_main)
 
+add_executable(test_kv_client
+  tests/test_kv_client.cpp
+)
+target_link_libraries(test_kv_client PRIVATE paxos_node_lib kv_client_lib gtest_main)
+
 include(GoogleTest)
 gtest_discover_tests(test_rpc)
 gtest_discover_tests(test_paxos_node)
 gtest_discover_tests(test_paxos_rsm)
+gtest_discover_tests(test_kv_client)
