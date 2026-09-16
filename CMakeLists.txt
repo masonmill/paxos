@@ -12,6 +12,7 @@ add_library(rpc
 target_include_directories(rpc PUBLIC include)
 
 add_library(paxos_node_lib
+  src/paxos.cpp
   src/paxos_impl.cpp
   src/kv_server_impl.cpp
 )
@@ -69,7 +70,13 @@ add_executable(test_kv_client
 )
 target_link_libraries(test_kv_client PRIVATE paxos_node_lib kv_client_lib gtest_main)
 
+add_executable(test_paxos_acceptance
+  tests/test_paxos_acceptance.cpp
+)
+target_link_libraries(test_paxos_acceptance PRIVATE paxos_node_lib gtest_main)
+
 include(GoogleTest)
 gtest_discover_tests(test_paxos_node)
 gtest_discover_tests(test_paxos_rsm)
 gtest_discover_tests(test_kv_client)
+gtest_discover_tests(test_paxos_acceptance)

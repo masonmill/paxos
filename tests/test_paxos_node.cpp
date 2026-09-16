@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "gtest/gtest.h"
-#include "paxos_impl.h"
+#include "paxos.h"
 #include "paxos_node.h"
 #include "paxos_rpcs.h"
 #include "peer_config.h"
@@ -56,7 +56,7 @@ TEST(PaxosNodeTest, ValidatesPeerIdRange) {
 
 TEST(PaxosImplTest, HandlersAbortWhenInvoked) {
   paxos::RpcDispatchRegistry registry;
-  paxos::RegisterPaxosHandlers(&registry);
+  paxos::Paxos peer({"/tmp/paxos_test_peer0.sock"}, /*me=*/0, &registry);
 
   paxos::RpcRequest prepare_request;
   prepare_request.method_name = paxos::kPaxosPrepareMethod;

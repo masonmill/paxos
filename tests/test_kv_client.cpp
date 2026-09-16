@@ -1,7 +1,7 @@
 #include "gtest/gtest.h"
 #include "kv_rpcs.h"
 #include "kv_server.h"
-#include "paxos_impl.h"
+#include "paxos.h"
 #include "paxos_rpcs.h"
 #include "rpc_dispatch.h"
 #include "rpc_transport.h"
@@ -47,7 +47,7 @@ TEST(KvServerTest, HandlersAbortWhenInvoked) {
 
 TEST(KvServerTest, CoexistsWithPaxosHandlersOnOneRegistry) {
   paxos::RpcDispatchRegistry registry;
-  paxos::RegisterPaxosHandlers(&registry);
+  paxos::Paxos peer({"/tmp/paxos_test_peer0.sock"}, /*me=*/0, &registry);
   paxos::RegisterKvHandlers(&registry);
 
   paxos::RpcRequest prepare_request;

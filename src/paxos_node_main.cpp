@@ -5,7 +5,7 @@
 #include <vector>
 
 #include "kv_server.h"
-#include "paxos_impl.h"
+#include "paxos.h"
 #include "paxos_node.h"
 #include "peer_config.h"
 #include "rpc_dispatch.h"
@@ -66,7 +66,7 @@ int main(int argc, char** argv) {
                socket_path.c_str());
 
   paxos::RpcDispatchRegistry registry;
-  paxos::RegisterPaxosHandlers(&registry);
+  paxos::Paxos peer(peer_socket_paths, id, &registry);
   paxos::RegisterKvHandlers(&registry);
   registry.RunAcceptLoop(listen_fd);
 
